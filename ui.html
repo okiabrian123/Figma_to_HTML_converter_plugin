@@ -1,0 +1,475 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Export HTML + Assets</title>
+  <style>
+    body { 
+      font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+      padding: 14px; 
+      margin: 0;
+      background: #f8f9fa;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .step {
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .step:last-child { border-bottom: none; margin-bottom: 0; }
+    
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .step-number {
+      background: #007bff;
+      color: white;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .step-title {
+      font-weight: 600;
+      color: #212529;
+    }
+    
+    button { 
+      padding: 10px 16px; 
+      border: 1px solid #dee2e6; 
+      border-radius: 6px; 
+      cursor: pointer; 
+      background: #fff;
+      transition: all 0.2s;
+      font-size: 13px;
+    }
+    button:hover { background: #f8f9fa; }
+    button.primary { 
+      background: #007bff; 
+      color: #fff; 
+      border-color: #007bff; 
+    }
+    button.primary:hover { background: #0056b3; }
+    button.success { 
+      background: #28a745; 
+      color: #fff; 
+      border-color: #28a745; 
+    }
+    button.success:hover { background: #1e7e34; }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .button-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    
+    .layer-list {
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      background: #f8f9fa;
+    }
+    
+    .layer-item {
+      padding: 8px 12px;
+      border-bottom: 1px solid #e9ecef;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: white;
+    }
+    .layer-item:last-child { border-bottom: none; }
+    .layer-item.child {
+      margin-left: 20px;
+      background: #f8f9fa;
+    }
+    .layer-item.grandchild {
+      margin-left: 40px;
+      background: #f1f3f4;
+    }
+    
+    .layer-checkbox {
+      margin: 0;
+    }
+    
+    .layer-info {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .layer-name {
+      font-weight: 500;
+      color: #212529;
+    }
+    
+    .layer-type {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    .layer-type.logo { background: #ffeaa7; color: #d63031; }
+    .layer-type.component { background: #81ecec; color: #00b894; }
+    .layer-type.layout { background: #a29bfe; color: #6c5ce7; }
+    .layer-type.simple { background: #ddd; color: #666; }
+    
+    .layer-path {
+      font-size: 11px;
+      color: #6c757d;
+      margin-top: 2px;
+    }
+    
+    .analysis-summary {
+      background: #e3f2fd;
+      border: 1px solid #bbdefb;
+      border-radius: 4px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+    
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+      font-size: 12px;
+    }
+    .summary-item:last-child { margin-bottom: 0; }
+    
+    .log { 
+      border: 1px solid #dee2e6; 
+      border-radius: 4px; 
+      padding: 8px; 
+      height: 120px; 
+      overflow-y: auto; 
+      white-space: pre-wrap; 
+      font-size: 11px; 
+      background: #f8f9fa; 
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+    }
+    
+    .hidden { display: none !important; }
+    
+    .controls {
+      margin-bottom: 12px;
+      padding: 8px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    
+    .bulk-controls {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .bulk-controls button {
+      padding: 4px 8px;
+      font-size: 11px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Step 1: Analyze -->
+    <div class="step" id="step1">
+      <div class="step-header">
+        <div class="step-number">1</div>
+        <div class="step-title">Analyze Layers</div>
+      </div>
+      <p style="margin: 0 0 12px 0; color: #6c757d; font-size: 12px;">
+        Select frames in Figma, then click Analyze to detect logos and components automatically.
+      </p>
+      <div class="button-row">
+        <button class="primary" id="analyzeBtn">🔍 Analyze Selected Layers</button>
+        <button id="closeBtn">Close</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Review & Configure -->
+    <div class="step hidden" id="step2">
+      <div class="step-header">
+        <div class="step-number">2</div>
+        <div class="step-title">Configure Export Settings</div>
+      </div>
+      
+      <div class="analysis-summary" id="summary"></div>
+      
+      <div class="controls">
+        <div class="bulk-controls">
+          <button id="selectAllLogos">✓ All Logos</button>
+          <button id="selectAllComponents">✓ All Components</button>
+          <button id="selectNone">✗ None</button>
+        </div>
+        <div style="color: #6c757d;">
+          <strong>Checked = Export as single image</strong> | Unchecked = Split into components
+        </div>
+      </div>
+      
+      <div class="layer-list" id="layerList"></div>
+      
+      <div class="button-row" style="margin-top: 16px;">
+        <button class="success" id="exportBtn">📦 Export with Settings</button>
+        <button id="backBtn">← Back</button>
+      </div>
+    </div>
+
+    <!-- Log -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">📋</div>
+        <div class="step-title">Export Log</div>
+      </div>
+      <div class="log" id="log">Ready. Select frames and click Analyze to start.</div>
+    </div>
+  </div>
+
+  <!-- JSZip -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script>
+    const logEl = document.getElementById('log');
+    let currentLayers = [];
+    
+    const log = (m) => { 
+      logEl.textContent += (logEl.textContent ? "\n" : "") + m; 
+      logEl.scrollTop = logEl.scrollHeight; 
+    };
+
+    // Navigation
+    function showStep(stepNum) {
+      document.querySelectorAll('.step').forEach(step => {
+        if (step.id === `step${stepNum}`) {
+          step.classList.remove('hidden');
+        } else if (step.id.startsWith('step')) {
+          step.classList.add('hidden');
+        }
+      });
+    }
+
+    // Step 1: Analyze
+    document.getElementById('analyzeBtn').onclick = () => {
+      log('🔍 Analyzing selected layers...');
+      parent.postMessage({ pluginMessage: { type: 'analyze' } }, '*');
+    };
+
+    document.getElementById('closeBtn').onclick = () => {
+      parent.postMessage({ pluginMessage: { type: 'close' } }, '*');
+    };
+
+    // Step 2: Configure
+    document.getElementById('backBtn').onclick = () => {
+      showStep(1);
+    };
+
+    // Bulk selection controls
+    document.getElementById('selectAllLogos').onclick = () => {
+      document.querySelectorAll('.layer-checkbox').forEach(checkbox => {
+        const layerId = checkbox.dataset.layerId;
+        const layer = findLayerById(layerId);
+        if (layer && layer.groupType === 'logo') {
+          checkbox.checked = true;
+        }
+      });
+      log('✓ Selected all logos for whole export');
+    };
+
+    document.getElementById('selectAllComponents').onclick = () => {
+      document.querySelectorAll('.layer-checkbox').forEach(checkbox => {
+        const layerId = checkbox.dataset.layerId;
+        const layer = findLayerById(layerId);
+        if (layer && layer.groupType === 'component') {
+          checkbox.checked = true;
+        }
+      });
+      log('✓ Selected all components for whole export');
+    };
+
+    document.getElementById('selectNone').onclick = () => {
+      document.querySelectorAll('.layer-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+      });
+      log('✗ Unselected all - will split into components');
+    };
+
+    // Export with settings
+    document.getElementById('exportBtn').onclick = () => {
+      const layerSettings = {};
+      document.querySelectorAll('.layer-checkbox').forEach(checkbox => {
+        layerSettings[checkbox.dataset.layerId] = checkbox.checked;
+      });
+
+      log('🚀 Starting export with custom settings...');
+      parent.postMessage({ 
+        pluginMessage: { 
+          type: 'export',
+          layerSettings: layerSettings
+        } 
+      }, '*');
+    };
+
+    // Helper functions
+    function findLayerById(id, layers = currentLayers) {
+      for (const layer of layers) {
+        if (layer.id === id) return layer;
+        if (layer.children) {
+          const found = findLayerById(id, layer.children);
+          if (found) return found;
+        }
+      }
+      return null;
+    }
+
+    function renderLayerItem(layer, depth = 0) {
+      const depthClass = depth === 0 ? '' : depth === 1 ? 'child' : 'grandchild';
+      const typeIcons = {
+        'logo': '🏷️',
+        'component': '🧩', 
+        'layout': '📐',
+        'simple': '📄'
+      };
+
+      return `
+        <div class="layer-item ${depthClass}">
+          <input type="checkbox" 
+                 class="layer-checkbox" 
+                 data-layer-id="${layer.id}"
+                 ${layer.shouldExportWhole ? 'checked' : ''}>
+          <div class="layer-info">
+            <span>${typeIcons[layer.groupType] || '📄'}</span>
+            <div>
+              <div class="layer-name">${layer.name}</div>
+              <div class="layer-path">${layer.path}</div>
+            </div>
+            <span class="layer-type ${layer.groupType}">${layer.groupType}</span>
+          </div>
+        </div>
+        ${layer.children ? layer.children.map(child => renderLayerItem(child, depth + 1)).join('') : ''}
+      `;
+    }
+
+    function renderSummary(layers) {
+      const counts = { logo: 0, component: 0, layout: 0, simple: 0 };
+      
+      function countLayers(layerList) {
+        layerList.forEach(layer => {
+          counts[layer.groupType]++;
+          if (layer.children) countLayers(layer.children);
+        });
+      }
+      
+      countLayers(layers);
+      
+      return `
+        <div style="font-weight: 600; margin-bottom: 8px;">📊 Analysis Results:</div>
+        <div class="summary-item">
+          <span>🏷️ Logos (recommended: export whole)</span>
+          <span><strong>${counts.logo}</strong></span>
+        </div>
+        <div class="summary-item">
+          <span>🧩 Components (can be split or whole)</span>
+          <span><strong>${counts.component}</strong></span>
+        </div>
+        <div class="summary-item">
+          <span>📐 Layout containers (will use flexbox)</span>
+          <span><strong>${counts.layout}</strong></span>
+        </div>
+        <div class="summary-item">
+          <span>📄 Simple elements</span>
+          <span><strong>${counts.simple}</strong></span>
+        </div>
+      `;
+    }
+
+    // Message handling
+    onmessage = async (event) => {
+      const msg = event?.data?.pluginMessage;
+      if (!msg || !msg.type) return;
+
+      if (msg.type === 'log') {
+        log(`ℹ️ ${msg.text}`);
+      }
+      
+      if (msg.type === 'error') {
+        log(`❌ ${msg.text}`);
+      }
+
+      if (msg.type === 'analysis-result') {
+        currentLayers = msg.layers;
+        
+        // Show summary
+        document.getElementById('summary').innerHTML = renderSummary(msg.layers);
+        
+        // Show layer list
+        const layerListHtml = msg.layers.map(layer => renderLayerItem(layer)).join('');
+        document.getElementById('layerList').innerHTML = layerListHtml;
+        
+        // Go to step 2
+        showStep(2);
+        
+        log(`✅ Found ${msg.layers.length} root layers with ${msg.layers.reduce((total, l) => total + (l.children ? l.children.length : 0), 0)} children`);
+      }
+
+      if (msg.type === 'zip') {
+        try {
+          const zip = new JSZip();
+          
+          // index.html
+          zip.file("index.html", msg.html, { base64: false });
+          
+          // screenshot
+          if (msg.fullPng) {
+            zip.file("full.png", msg.fullPng, { base64: true });
+          }
+
+          // assets
+          for (const asset of msg.assets || []) {
+            zip.file(asset.path, asset.data, { base64: true });
+          }
+
+          log(`📁 Creating ZIP with ${msg.assets?.length || 0} assets...`);
+          
+          const blob = await zip.generateAsync({ 
+            type: "blob",
+            compression: "DEFLATE",
+            compressionOptions: { level: 6 }
+          });
+          
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = msg.filename || "export.zip";
+          a.click();
+          
+          log(`✅ ZIP downloaded: ${msg.filename || 'export.zip'}`);
+          URL.revokeObjectURL(a.href);
+          
+        } catch (error) {
+          log(`❌ Error creating ZIP: ${error.message}`);
+        }
+      }
+    };
+
+    // Initialize
+    showStep(1);
+  </script>
+</body>
+</html>

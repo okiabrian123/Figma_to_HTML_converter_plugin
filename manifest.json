@@ -1,0 +1,12 @@
+{
+    "name": "Figma → HTML/Tailwind (Hierarki)",
+    "id": "figma-to-html-hierarki",
+    "api": "1.0.0",
+    "editorType": ["figma"],
+    "main": "code.js",
+    "ui": "ui.html",
+    "relaunchButtons": [
+      { "command": "export-html", "name": "Export HTML + Assets (Hierarki)" }
+    ]
+  }
+  
